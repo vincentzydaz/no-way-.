@@ -1,41 +1,40 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
 const { handleMessage } = require('./handles/handleMessage');
 const { handlePostback } = require('./handles/handlePostback');
-const { sendMessage } = require('./handles/sendMessage');
-const { exec, spawn } = require("child_process");
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
 const VERIFY_TOKEN = 'pagebot';
 const PAGE_ACCESS_TOKEN = fs.readFileSync('token.txt', 'utf8').trim();
-const SCRIPT_FILE = "index.js";
-const SCRIPT_PATH = __dirname + "/" + SCRIPT_FILE;
-const RESTART_FILE = './restart.json';
-const GIT_REPO = "https://github.com/churchillitos/Pgiboka.git";
+const COMMANDS_PATH = path.join(__dirname, 'commands');
 
+// Webhook verification
 app.get('/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
+  const { 'hub.mode': mode, 'hub.verify_token': token, 'hub.challenge': challenge } = req.query;
 
   if (mode && token) {
     if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      res.status(200).send(challenge);
-    } else {
-      res.sendStatus(403);
+      console.log('WEBHOOK_VERIFIED');
+      return res.status(200).send(challenge);
     }
+    return res.sendStatus(403);
   }
+
+  res.sendStatus(400); // Bad request if neither mode nor token are provided
 });
 
+// Webhook event handling
 app.post('/webhook', (req, res) => {
-  const body = req.body;
+  const { body } = req;
 
   if (body.object === 'page') {
-    body.entry.forEach(entry => {
-      entry.messaging.forEach(event => {
+    // Ensure entry and messaging exist before iterating
+    body.entry?.forEach(entry => {
+      entry.messaging?.forEach(event => {
         if (event.message) {
           handleMessage(event, PAGE_ACCESS_TOKEN);
         } else if (event.postback) {
@@ -43,66 +42,75 @@ app.post('/webhook', (req, res) => {
         }
       });
     });
-    res.status(200).send('EVENT_RECEIVED');
-  } else {
-    res.sendStatus(404);
+
+    return res.status(200).send('EVENT_RECEIVED');
+  }
+
+  res.sendStatus(404);
+});
+
+// Helper function for Axios requests
+const sendMessengerProfileRequest = async (method, url, data = null) => {
+  try {
+    const response = await axios({
+      method,
+      url: `https://graph.facebook.com/v21.0${url}?access_token=${PAGE_ACCESS_TOKEN}`,
+      headers: { 'Content-Type': 'application/json' },
+      data
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error in ${method} request:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Load all command files from the "commands" directory
+const loadCommands = () => {
+  return fs.readdirSync(COMMANDS_PATH)
+    .filter(file => file.endsWith('.js'))
+    .map(file => {
+      const command = require(path.join(COMMANDS_PATH, file));
+      return command.name && command.description ? { name: command.name, description: command.description } : null;
+    })
+    .filter(Boolean);
+};
+
+// Load or reload Messenger Menu Commands dynamically
+const loadMenuCommands = async (isReload = false) => {
+  const commands = loadCommands();
+
+  if (isReload) {
+    // Delete existing commands if reloading
+    await sendMessengerProfileRequest('delete', '/me/messenger_profile', { fields: ['commands'] });
+    console.log('Menu commands deleted successfully.');
+  }
+
+  // Load new or updated commands
+  await sendMessengerProfileRequest('post', '/me/messenger_profile', {
+    commands: [{ locale: 'default', commands }],
+  });
+
+  console.log('Menu commands loaded successfully.');
+};
+
+// Watch for changes in the commands directory and reload the commands
+fs.watch(COMMANDS_PATH, (eventType, filename) => {
+  if (['change', 'rename'].includes(eventType) && filename.endsWith('.js')) {
+    loadMenuCommands(true).catch(error => {
+      console.error('Error reloading menu commands:', error);
+    });
   }
 });
 
-function executeCommand(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, { cwd: __dirname, shell: true }, (error, stdout, stderr) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(stdout);
-    });
-  });
-}
-
-async function loadBot() {
-  try {
-    await executeCommand(`git pull ${GIT_REPO} main --ff-only`);
-  } catch (error) {
-    console.error("Failed to update code from the repository. Proceeding without update.");
-  }
-
-  const executeBot = (cmd, args) => {
-    return new Promise((resolve) => {
-      let process_ = spawn(cmd, args, {
-        cwd: __dirname,
-        stdio: "inherit",
-        shell: true,
-      });
-
-      process_.on("close", (exitCode) => {
-        if (exitCode === 1) {
-          loadBot();
-        } else {
-          console.log(`Bot stopped with code ${exitCode}`);
-        }
-        resolve();
-      });
-    });
-  };
-
-  if (fs.existsSync(RESTART_FILE) && fs.statSync(RESTART_FILE).size > 0) {
-    try {
-      const restartData = JSON.parse(fs.readFileSync(RESTART_FILE, 'utf8'));
-      const adminId = restartData.restartId;
-      const restartTime = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' });
-      sendMessage(adminId, { text: `Successfully restarted the bot. Time: ${restartTime}` }, PAGE_ACCESS_TOKEN);
-      fs.unlinkSync(RESTART_FILE);
-    } catch (error) {
-      console.error("Error parsing restart file:", error);
-    }
-  }
-
-  executeBot("node", [SCRIPT_PATH]).catch(console.error);
-}
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
+// Server initialization
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
-  loadBot();
+  // Load Messenger Menu Commands asynchronously after the server starts
+  try {
+    await loadMenuCommands(); // Load commands without deleting (initial load)
+  } catch (error) {
+    console.error('Error loading initial menu commands:', error);
+  }
 });
