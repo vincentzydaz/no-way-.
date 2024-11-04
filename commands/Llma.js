@@ -32,7 +32,7 @@ module.exports = {
       const question = args.join(" ");
       const waitingMessage = await sendMessage(senderId, { text: `AI answering: ${question}` }, pageAccessToken);
 
-      const apiUrl = `https://joshweb.click/api/llama-3-70b?q=${encodeURIComponent(question)}`;
+      const apiUrl = `https://echavie3.nethprojects.workers.dev/ai?model=@cf/meta/llama-3.2-3b-instruct&q=${encodeURIComponent(question)}`;
       const response = await axios.get(apiUrl);
 
       if (response.data && response.data.success) {
@@ -45,32 +45,3 @@ module.exports = {
 
       if (waitingMessage && waitingMessage.message_id) {
         await sendMessage(senderId, { message_id: waitingMessage.message_id, delete: true }, pageAccessToken);
-      }
-    } catch (error) {
-      console.error("An error occurred while fetching from AI:", error);
-      await sendMessage(senderId, { text: "An error occurred while fetching the response." }, pageAccessToken);
-    }
-  }
-};
-
-async function sendConcatenatedMessage(chilli, text, kalamansi) {
-  const maxMessageLength = 2000;
-
-  if (text.length > maxMessageLength) {
-    const messages = splitMessageIntoChunks(text, maxMessageLength);
-    for (const message of messages) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await sendMessage(chilli, { text: message }, kalamansi);
-    }
-  } else {
-    await sendMessage(chilli, { text }, kalamansi);
-  }
-}
-
-function splitMessageIntoChunks(message, chunkSize) {
-  const chunks = [];
-  for (let i = 0; i < message.length; i += chunkSize) {
-    chunks.push(message.slice(i, i + chunkSize));
-  }
-  return chunks;
-}
