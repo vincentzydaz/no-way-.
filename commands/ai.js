@@ -4,7 +4,7 @@ const { sendMessage } = require('../handles/sendMessage');
 module.exports = {
   name: 'ai',
   description: 'Interact with GPT-4o',
-  usage: 'gpt4 [your message]',
+  usage: 'ai [your message]',
   author: 'coffee',
 
   async execute(senderId, args, pageAccessToken) {
