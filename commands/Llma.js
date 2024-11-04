@@ -45,3 +45,32 @@ module.exports = {
 
       if (waitingMessage && waitingMessage.message_id) {
         await sendMessage(senderId, { message_id: waitingMessage.message_id, delete: true }, pageAccessToken);
+      }
+    } catch (error) {
+      console.error("An error occurred while fetching from AI:", error);
+      await sendMessage(senderId, { text: "An error occurred while fetching the response." }, pageAccessToken);
+    }
+  }
+};
+
+async function sendConcatenatedMessage(chilli, text, kalamansi) {
+  const maxMessageLength = 2000;
+
+  if (text.length > maxMessageLength) {
+    const messages = splitMessageIntoChunks(text, maxMessageLength);
+    for (const message of messages) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await sendMessage(chilli, { text: message }, kalamansi);
+    }
+  } else {
+    await sendMessage(chilli, { text }, kalamansi);
+  }
+}
+
+function splitMessageIntoChunks(message, chunkSize) {
+  const chunks = [];
+  for (let i = 0; i < message.length; i += chunkSize) {
+    chunks.push(message.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
