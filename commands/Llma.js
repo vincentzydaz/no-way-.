@@ -32,7 +32,7 @@ module.exports = {
       const question = args.join(" ");
       const waitingMessage = await sendMessage(senderId, { text: `AI answering: ${question}` }, pageAccessToken);
 
-      const apiUrl = `https://echavie3.nethprojects.workers.dev/ai?model=@cf/meta/llama-3.2-3b-instruct&q=${encodeURIComponent(question)}`;
+      const apiUrl = `https://joshweb.click/api/llama-3-70b?q=${encodeURIComponent(question)}`;
       const response = await axios.get(apiUrl);
 
       if (response.data && response.data.success) {
