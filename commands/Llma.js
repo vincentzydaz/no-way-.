@@ -15,7 +15,7 @@ const convertToGothic = (text) => {
 };
 
 module.exports = {
-  name: "ai",
+  name: "gpt",
   description: "Fetches an answer from the Meta AI API for the given question",
   author: "chilli",
   usage: "metaai <question>",
