@@ -88,7 +88,7 @@ if (messageText === 'reminiv2') {
     // Handling "gemini" command
     if (messageText.startsWith('gemini')) {
       const lastImage = lastImageByUser.get(senderId);
-      const args = messageText.split(/\/).slice(1);
+      const args = messageText.split(/\s+/).slice(1);
 
       try {
         await commands.get('gemini').execute(senderId, args, pageAccessToken, event, lastImage);
@@ -127,3 +127,34 @@ if (messageText === 'imgur') {
     } else {
       const words = messageText.split(' ');
       commandName = words.shift().toLowerCase();
+      args = words;
+    }
+
+    if (commands.has(commandName)) {
+      const command = commands.get(commandName);
+      try {
+        await command.execute(senderId, args, pageAccessToken, sendMessage);
+      } catch (error) {
+        console.error(`Error executing command ${commandName}:`, error);
+        sendMessage(senderId, { text: `There was an error executing the command "${commandName}". Please try again later.` }, pageAccessToken);
+      }
+      return;
+    }
+
+    const aiCommand = commands.get('ai');
+    if (aiCommand) {
+      try {
+        await aiCommand.execute(senderId, [messageText], pageAccessToken);
+      } catch (error) {
+        console.error('Error executing Ai command:', error);
+        sendMessage(senderId, { text: 'There was an error processing your request.' }, pageAccessToken);
+      }
+    }
+  } else if (event.message) {
+    console.log('Received message without text');
+  } else {
+    console.log('Received event without message');
+  }
+}
+
+module.exports = { handleMessage };
