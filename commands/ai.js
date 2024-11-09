@@ -29,10 +29,10 @@ const handleChatResponse = async (senderId, input, pageAccessToken) => {
     const result = data.response;
 
     const responseTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila', hour12: true });
-    const formattedResponse = `━━━━━━━━━━━━━━━━━━\𝗤𝘂𝗲𝘀𝘁𝗶𝗼𝗻: ${input}\━━━━━━━━━━━━━━━━━━\𝗔𝗻𝘀𝘄𝗲𝗿: ${result}\━━━━━━━━━━━━━━━━━━\⏰ 𝗥𝗲𝘀𝗽𝗼𝗻𝗱 𝗧𝗶𝗺𝗲: ${responseTime}`;
+    const formattedResponse = `━━━━━━━━━━━━━━━━━━\n𝗤𝘂𝗲𝘀𝘁𝗶𝗼𝗻: ${input}\n━━━━━━━━━━━━━━━━━━\n𝗔𝗻𝘀𝘄𝗲𝗿: ${result}\n━━━━━━━━━━━━━━━━━━\n⏰ 𝗥𝗲𝘀𝗽𝗼𝗻𝗱 𝗧𝗶𝗺𝗲: ${responseTime}`;
 
     if (result.includes('TOOL_CALL: generateImage')) {
-      const imageUrlMatch = result.match(/\\.*?\\(https:\\.*?)\/);
+      const imageUrlMatch = result.match(/\!\[.*?\]\((https:\/\/.*?)\)/);
 
       if (imageUrlMatch && imageUrlMatch[1]) {
         const imageUrl = imageUrlMatch[1];
@@ -78,7 +78,7 @@ const splitMessageIntoChunks = (message, chunkSize) => {
 
 const sendError = async (senderId, errorMessage, pageAccessToken) => {
   const responseTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila', hour12: true });
-  const formattedMessage = `━━━━━━━━━━━━━━━━━━\${errorMessage}\━━━━━━━━━━━━━━━━━━\⏰ 𝗥𝗲𝘀𝗽𝗼𝗻𝗱 𝗧𝗶𝗺𝗲: ${responseTime}`;
+  const formattedMessage = `━━━━━━━━━━━━━━━━━━\n${errorMessage}\n━━━━━━━━━━━━━━━━━━\n⏰ 𝗥𝗲𝘀𝗽𝗼𝗻𝗱 𝗧𝗶𝗺𝗲: ${responseTime}`;
 
   await sendMessage(senderId, { text: formattedMessage }, pageAccessToken);
 };
