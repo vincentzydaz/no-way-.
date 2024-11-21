@@ -22,7 +22,7 @@ module.exports = {
 };
 
 const handleChatResponse = async (senderId, input, pageAccessToken) => {
-  const apiUrl = "https://appjonellccapis.zapto.org/api/gpt4o-v2";
+  const apiUrl = "https://orc-six.onrender.com/gpt4-v2?";
 
   try {
     const { data } = await axios.get(apiUrl, { params: { prompt: input } });
