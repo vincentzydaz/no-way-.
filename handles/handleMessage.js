@@ -37,7 +37,7 @@ async function handleMessage(event, pageAccessToken) {
   if (event.message && event.message.text) {
     const messageText = event.message.text.trim().toLowerCase();
 
-    // Handling "removebg" command
+     // Handling "removebg" command
     if (messageText === 'removebg') {
       const lastImage = lastImageByUser.get(senderId);
       if (lastImage) {
@@ -52,7 +52,30 @@ async function handleMessage(event, pageAccessToken) {
       }
       return;
     }
+    
+    // Handling "gpt4" command
+if (messageText.startsWith('gpt4')) {
+  const lastImage = lastImageByUser.get(senderId); // Retrieve the last image sent by the user
+  const args = messageText.split(/\s+/).slice(1); // Extract arguments from the command
 
+  try {
+    // Execute the "gpt4" command
+    await commands.get('gpt4').execute(senderId, args, pageAccessToken, event, lastImage);
+
+    // Clear the stored image after processing
+    lastImageByUser.delete(senderId);
+  } catch (error) {
+    console.error('Error while processing the gpt4 command:', error);
+    // Send error feedback to the user
+    await sendMessage(
+      senderId, 
+      { text: '❌ An error occurred while processing your gpt4 request. Please try again later.' }, 
+      pageAccessToken
+    );
+  }
+  return;
+}
+    
     // Handling "remini" command
 if (messageText === 'remini') {
   const lastImage = lastImageByUser.get(senderId);
