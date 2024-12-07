@@ -92,12 +92,12 @@ if (messageText === 'remini') {
   return;
 }
     
-// Handling "reminiv2" command
-if (messageText === 'reminiv2') {
+// Handling "upscale" command
+if (messageText === 'upscale') {
   const lastImage = lastImageByUser.get(senderId);
   if (lastImage) {
     try {
-      await commands.get('reminiv2').execute(senderId, [], pageAccessToken, lastImage);
+      await commands.get('upscale').execute(senderId, [], pageAccessToken, lastImage);
       lastImageByUser.delete(senderId);
     } catch (error) {
       await sendMessage(senderId, { text: '⚠️ An error occurred while enhancing the image. Please try again later.' }, pageAccessToken);
