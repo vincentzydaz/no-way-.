@@ -124,18 +124,27 @@ if (messageText === 'upscale') {
     }
 
     // Handling "ai" command
-    if (messageText.startsWith('ai')) {
-      const lastImage = lastImageByUser.get(senderId);
-      const args = messageText.split(/\s+/).slice(1);
+if (messageText.startsWith('ai')) {
+  const lastImage = lastImageByUser.get(senderId); // Retrieve the last image sent by the user
+  const args = messageText.split(/\s+/).slice(1); // Extract arguments from the command
 
-      try {
-        await commands.get('gemini').execute(senderId, args, pageAccessToken, event, lastImage);
-        lastImageByUser.delete(senderId);
-      } catch (error) {
-        await sendMessage(senderId, { text: 'An error occurred while processing the Gemini command.' }, pageAccessToken);
-      }
-      return;
-    }
+  try {
+    // Execute the "ai" command
+    await commands.get('ai').execute(senderId, args, pageAccessToken, event, lastImage);
+
+    // Clear the stored image after processing
+    lastImageByUser.delete(senderId);
+  } catch (error) {
+    console.error('Error while processing the ai command:', error);
+    // Send error feedback to the user
+    await sendMessage(
+      senderId, 
+      { text: '❌ An error occurred while processing your gpt4 request. Please try again later.' }, 
+      pageAccessToken
+    );
+  }
+  return;
+}
 
 if (messageText === 'imgur') {
       const lastImage = lastImageByUser.get(senderId);
