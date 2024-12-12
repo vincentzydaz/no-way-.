@@ -2,7 +2,7 @@ const axios = require("axios");
 const { sendMessage } = require('../handles/sendMessage');
 
 module.exports = {
-  name: "geminiv3",
+  name: "gemini",
   description: "Interact with Gemini AI Advanced ft. Vision",
   author: "Rized",
 
@@ -44,7 +44,6 @@ module.exports = {
       let responseMessage;
 
       if (useImageRecognition) {
-          (image recognition)
         const imageApiResponse = await axios.get(imageRecognitionUrl, {
           params: { prompt: userPrompt, url: imageUrl || "" }
         });
