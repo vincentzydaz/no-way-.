@@ -2,7 +2,7 @@ const axios = require("axios");
 const { sendMessage } = require('../handles/sendMessage');
 
 module.exports = {
-  name: "ai",
+  name: "geminiv3",
   description: "Interact with Gemini AI Advanced ft. Vision",
   author: "Rized",
 
