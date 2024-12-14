@@ -5,7 +5,7 @@ const fs = require('fs');
 const token = fs.readFileSync('token.txt', 'utf8');
 
 module.exports = {
-  name: 'aidetector',
+  name: 'humandetector',
   description: 'detect if a text was written by an ai or a human',
   usage: 'aidetector [your text]',
   author: 'Rized',
